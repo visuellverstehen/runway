@@ -212,4 +212,9 @@ class ResourceController extends CpController
             'saved' => $saved,
         ];
     }
+
+    public function preview(EditRequest $request, Resource $resource, $model)
+    {
+
+    }
 }

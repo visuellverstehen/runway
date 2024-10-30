@@ -65,103 +65,124 @@
             :errors="errors"
             @updated="values = $event"
         >
-            <div>
-                <component
-                    v-for="component in components"
-                    :key="component.id"
-                    :is="component.name"
-                    :container="container"
-                    v-bind="component.props"
-                    v-on="component.events"
-                />
+            <live-preview
+                slot-scope="{ container, components, setFieldMeta }"
+                :name="publishContainer"
+                :url="livePreviewUrl"
+                :previewing="isPreviewing"
+                :targets="previewTargets"
+                :values="values"
+                :blueprint="blueprint"
+                :reference="initialReference"
+                @opened-via-keyboard="openLivePreview"
+                @closed="closeLivePreview"
+            >
+                <div>
+                    <component
+                        v-for="component in components"
+                        :key="component.id"
+                        :is="component.name"
+                        :container="container"
+                        v-bind="component.props"
+                        v-on="component.events"
+                    />
 
-                <publish-tabs
-                    :read-only="readOnly"
-                    :enable-sidebar="sidebarEnabled"
-                    @updated="setFieldValue"
-                    @meta-updated="setFieldMeta"
-                    @focus="$refs.container.$emit('focus', $event)"
-                    @blur="$refs.container.$emit('blur', $event)"
-                >
-                    <template #actions="{ shouldShowSidebar }">
-                        <div class="card p-0 mb-5">
-                            <div v-if="resourceHasRoutes">
-                                <div class="p-3 flex items-center space-x-2" v-if="showVisitUrlButton">
-                                    <a
-                                        class="flex items-center justify-center btn w-full"
-                                        v-if="showVisitUrlButton"
-                                        :href="permalink"
-                                        target="_blank">
-                                        <svg-icon name="light/external-link" class="w-4 h-4 rtl:ml-2 ltr:mr-2 shrink-0" />
-                                        <span>{{ __('Visit URL') }}</span>
-                                    </a>
+                    <publish-tabs
+                        v-show="tabsVisible"
+                        :read-only="readOnly"
+                        :enable-sidebar="sidebarEnabled"
+                        @updated="setFieldValue"
+                        @meta-updated="setFieldMeta"
+                        @focus="$refs.container.$emit('focus', $event)"
+                        @blur="$refs.container.$emit('blur', $event)"
+                    >
+                        <template #actions="{ shouldShowSidebar }">
+                            <div class="card p-0 mb-5">
+                                <div v-if="resourceHasRoutes">
+                                    <div class="p-3 flex items-center space-x-2" v-if="showVisitUrlButton">
+                                        <button
+                                            class="flex items-center justify-center btn w-full"
+                                            v-if="showLivePreviewButton"
+                                            @click="openLivePreview">
+                                            <svg-icon name="light/synchronize" class="h-4 w-4 rtl:ml-2 ltr:mr-2 shrink-0" />
+                                            <span>{{ __('Live Preview') }}</span>
+                                        </button>
+                                        <a
+                                            class="flex items-center justify-center btn w-full"
+                                            v-if="showVisitUrlButton"
+                                            :href="permalink"
+                                            target="_blank">
+                                            <svg-icon name="light/external-link" class="w-4 h-4 rtl:ml-2 ltr:mr-2 shrink-0" />
+                                            <span>{{ __('Visit URL') }}</span>
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div v-if="publishStatesEnabled && !revisionsEnabled">
+                                <div v-if="publishStatesEnabled && !revisionsEnabled">
+                                    <div
+                                        class="flex items-center justify-between px-4 py-2"
+                                        :class="{ 'border-t dark:border-dark-900': resourceHasRoutes && permalink }"
+                                    >
+                                        <label v-text="__('Published')" class="publish-field-label font-medium" />
+                                        <toggle-input :value="published" :read-only="!canManagePublishState" @input="setFieldValue(resource.published_column, $event)" />
+                                    </div>
+                                </div>
+
                                 <div
-                                    class="flex items-center justify-between px-4 py-2"
-                                    :class="{ 'border-t dark:border-dark-900': resourceHasRoutes && permalink }"
+                                    v-if="revisionsEnabled && !isCreating"
+                                    class="p-4"
+                                    :class="{ 'border-t dark:border-dark-900': showVisitUrlButton }"
                                 >
-                                    <label v-text="__('Published')" class="publish-field-label font-medium" />
-                                    <toggle-input :value="published" :read-only="!canManagePublishState" @input="setFieldValue(resource.published_column, $event)" />
+                                    <label class="publish-field-label font-medium mb-2" v-text="__('Revisions')"/>
+                                    <div class="mb-1 flex items-center" v-if="published">
+                                        <span class="text-green-600 w-6 text-center">&check;</span>
+                                        <span class="text-2xs" v-text="__('Model has a published version')"></span>
+                                    </div>
+                                    <div class="mb-1 flex items-center" v-else>
+                                        <span class="text-orange w-6 text-center">!</span>
+                                        <span class="text-2xs" v-text="__('Model has not been published')"></span>
+                                    </div>
+                                    <div class="mb-1 flex items-center" v-if="!isWorkingCopy && published">
+                                        <span class="text-green-600 w-6 text-center">&check;</span>
+                                        <span class="text-2xs" v-text="__('This is the published version')"></span>
+                                    </div>
+                                    <div class="mb-1 flex items-center" v-if="isDirty">
+                                        <span class="text-orange w-6 text-center">!</span>
+                                        <span class="text-2xs" v-text="__('Unsaved changes')"></span>
+                                    </div>
+                                    <button
+                                        class="flex items-center justify-center mt-4 btn-flat px-2 w-full"
+                                        v-if="!isCreating && revisionsEnabled"
+                                        @click="showRevisionHistory = true">
+                                        <svg-icon name="light/history" class="h-4 w-4 rtl:ml-2 ltr:mr-2" />
+                                        <span>{{ __('View History') }}</span>
+                                    </button>
                                 </div>
                             </div>
+                        </template>
+                    </publish-tabs>
+                </div>
 
-                            <div
-                                v-if="revisionsEnabled && !isCreating"
-                                class="p-4"
-                                :class="{ 'border-t dark:border-dark-900': showVisitUrlButton }"
-                            >
-                                <label class="publish-field-label font-medium mb-2" v-text="__('Revisions')"/>
-                                <div class="mb-1 flex items-center" v-if="published">
-                                    <span class="text-green-600 w-6 text-center">&check;</span>
-                                    <span class="text-2xs" v-text="__('Model has a published version')"></span>
-                                </div>
-                                <div class="mb-1 flex items-center" v-else>
-                                    <span class="text-orange w-6 text-center">!</span>
-                                    <span class="text-2xs" v-text="__('Model has not been published')"></span>
-                                </div>
-                                <div class="mb-1 flex items-center" v-if="!isWorkingCopy && published">
-                                    <span class="text-green-600 w-6 text-center">&check;</span>
-                                    <span class="text-2xs" v-text="__('This is the published version')"></span>
-                                </div>
-                                <div class="mb-1 flex items-center" v-if="isDirty">
-                                    <span class="text-orange w-6 text-center">!</span>
-                                    <span class="text-2xs" v-text="__('Unsaved changes')"></span>
-                                </div>
-                                <button
-                                    class="flex items-center justify-center mt-4 btn-flat px-2 w-full"
-                                    v-if="!isCreating && revisionsEnabled"
-                                    @click="showRevisionHistory = true">
-                                    <svg-icon name="light/history" class="h-4 w-4 rtl:ml-2 ltr:mr-2" />
-                                    <span>{{ __('View History') }}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </template>
-                </publish-tabs>
-            </div>
+                <template v-slot:buttons>
+                    <button
+                        v-if="!readOnly"
+                        class="rtl:mr-4 ltr:ml-4"
+                        :class="saveButtonClass"
+                        :disabled="!canSave"
+                        @click.prevent="save"
+                        v-text="saveText">
+                    </button>
 
-            <template v-slot:buttons>
-                <button
-                    v-if="!readOnly"
-                    class="rtl:mr-4 ltr:ml-4"
-                    :class="saveButtonClass"
-                    :disabled="!canSave"
-                    @click.prevent="save"
-                    v-text="saveText">
-                </button>
-
-                <button
-                    v-if="revisionsEnabled && !isCreating"
-                    class="rtl:mr-4 ltr:ml-4 btn-primary flex items-center"
-                    :disabled="!canPublish"
-                    @click="confirmingPublish = true">
-                    <span v-text="this.publishButtonText" />
-                    <svg-icon name="micro/chevron-down-xs" class="rtl:mr-2 ltr:ml-2 w-2" />
-                </button>
-            </template>
+                    <button
+                        v-if="revisionsEnabled && !isCreating"
+                        class="rtl:mr-4 ltr:ml-4 btn-primary flex items-center"
+                        :disabled="!canPublish"
+                        @click="confirmingPublish = true">
+                        <span v-text="this.publishButtonText" />
+                        <svg-icon name="micro/chevron-down-xs" class="rtl:mr-2 ltr:ml-2 w-2" />
+                    </button>
+                </template>
+            </live-preview>
         </publish-container>
 
         <div class="md:hidden mt-6 flex items-center">
@@ -251,6 +272,7 @@ export default {
         createAnotherUrl: String,
         initialListingUrl: String,
         resourceHasRoutes: Boolean,
+        previewTargets: Array,
     },
 
     data() {
@@ -265,6 +287,8 @@ export default {
             isWorkingCopy: this.initialIsWorkingCopy,
             error: null,
             errors: {},
+            isPreviewing: false,
+            tabsVisible: true,
             state: 'new',
             revisionMessage: null,
             showRevisionHistory: null,
@@ -314,6 +338,14 @@ export default {
 
         listingUrl() {
             return `${this.initialListingUrl}`;
+        },
+
+        livePreviewUrl() {
+            return '/questions/1';
+        },
+
+        showLivePreviewButton() {
+            return !this.isCreating && this.isBase && this.livePreviewUrl;
         },
 
         showVisitUrlButton() {
@@ -530,6 +562,21 @@ export default {
             } else {
                 this.$toast.error(e || 'Something went wrong');
             }
+        },
+
+        openLivePreview() {
+            this.tabsVisible = false;
+            this.$wait(200)
+                .then(() => {
+                    this.isPreviewing = true;
+                    return this.$wait(300);
+                })
+                .then(() => this.tabsVisible = true);
+        },
+
+        closeLivePreview() {
+            this.isPreviewing = false;
+            this.tabsVisible = true;
         },
 
         publishActionCompleted({ published, isWorkingCopy, response }) {

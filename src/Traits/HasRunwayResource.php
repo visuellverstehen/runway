@@ -113,6 +113,14 @@ trait HasRunwayResource
         ]);
     }
 
+    public function runwayLivePreviewUrl(): string
+    {
+        return cp_route('runway.preview', [
+            'resource' => $this->runwayResource()->handle(),
+            'model' => $this->{$this->runwayResource()->routeKey()},
+        ]);
+    }
+
     public function runwayUpdateUrl(): string
     {
         return cp_route('runway.update', [

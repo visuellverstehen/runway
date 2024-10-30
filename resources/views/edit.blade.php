@@ -26,6 +26,11 @@
         :initial-item-actions="{{ json_encode($itemActions) }}"
         item-action-url="{{ cp_route('runway.actions.run', ['resource' => $resource->handle()]) }}"
         :revisions-enabled="{{ $str::bool($revisionsEnabled) }}"
+        :preview-targets="{{ json_encode(['format'=>'{permalink}','label'=>'Entry','refresh'=>true]) }}"
+        :live-preview-url="{{ cp_route('runway.preview', [
+            'resource' => $resource->handle(),
+            'model' => $resource->routeKey(),
+        ]) }}"
     ></runway-publish-form>
 
     <script>

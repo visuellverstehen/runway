@@ -19,6 +19,7 @@ Route::name('runway.')->prefix('runway')->group(function () {
     Route::post('{resource}/create', [ResourceController::class, 'store'])->name('store');
     Route::get('{resource}/{model}', [ResourceController::class, 'edit'])->name('edit');
     Route::patch('{resource}/{model}', [ResourceController::class, 'update'])->name('update');
+    Route::get('{resource}/{model}/preview', [ResourceController::class, 'preview'])->name('preview');
 
     Route::group(['prefix' => '{resource}/{model}'], function () {
         Route::post('publish', [PublishedModelsController::class, 'store'])->name('published.store');
