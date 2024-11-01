@@ -273,6 +273,7 @@ export default {
         initialListingUrl: String,
         resourceHasRoutes: Boolean,
         previewTargets: Array,
+        livePreviewUrl: String,
     },
 
     data() {
@@ -338,10 +339,6 @@ export default {
 
         listingUrl() {
             return `${this.initialListingUrl}`;
-        },
-
-        livePreviewUrl() {
-            return '/questions/1';
         },
 
         showLivePreviewButton() {

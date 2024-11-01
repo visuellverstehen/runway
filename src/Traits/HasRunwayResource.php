@@ -5,6 +5,8 @@ namespace StatamicRadPack\Runway\Traits;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Statamic\Contracts\Data\Augmented;
 use Statamic\Contracts\Revisions\Revision;
+use Statamic\Facades\Antlers;
+use Statamic\Facades\Site;
 use Statamic\Fields\Field;
 use Statamic\Fieldtypes\Hidden;
 use Statamic\Fieldtypes\Section;
@@ -209,6 +211,36 @@ trait HasRunwayResource
             'published' => $this->published(),
             'data' => $data,
         ];
+    }
+
+    public function previewTargets()
+    {
+        return collect([
+            [
+                'format' => '{permalink}',
+                'label' => 'Entry',
+                'refresh' => true,
+                'url' => $this->resolvePreviewTargetUrl('{permalink}'),
+            ]
+        ]);
+    }
+
+    private function resolvePreviewTargetUrl($format)
+    {
+        if (! Str::contains($format, '{{')) {
+            $format = preg_replace_callback('/{\s*([a-zA-Z0-9_\-\:\.]+)\s*}/', function ($match) {
+                return "{{ {$match[1]} }}";
+            }, $format);
+        }
+
+        return (string) Antlers::parse($format, array_merge($this->routeData(), [
+            'config' => config()->all(),
+            // 'site' => $this->site(),
+            'uri' => $this->uri(),
+            'url' => $this->url(),
+            'permalink' => $this->absoluteUrl(),
+            // 'locale' => $this->locale(),
+        ]));
     }
 
     public function makeFromRevision($revision): self

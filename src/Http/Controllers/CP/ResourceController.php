@@ -10,6 +10,7 @@ use Statamic\Facades\Action;
 use Statamic\Facades\Scope;
 use Statamic\Facades\User;
 use Statamic\Http\Controllers\CP\CpController;
+use Statamic\Http\Controllers\CP\PreviewController;
 use StatamicRadPack\Runway\Http\Requests\CP\CreateRequest;
 use StatamicRadPack\Runway\Http\Requests\CP\EditRequest;
 use StatamicRadPack\Runway\Http\Requests\CP\IndexRequest;
@@ -215,6 +216,6 @@ class ResourceController extends CpController
 
     public function preview(EditRequest $request, Resource $resource, $model)
     {
-
+        return (new PreviewController($request))->edit($request, null, $resource);
     }
 }

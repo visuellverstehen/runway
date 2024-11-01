@@ -4,6 +4,7 @@
 @section('wrapper_class', 'max-w-3xl')
 
 @section('content')
+
     <runway-publish-form
         publish-container="base"
         :initial-actions='@json($actions)'
@@ -27,9 +28,9 @@
         item-action-url="{{ cp_route('runway.actions.run', ['resource' => $resource->handle()]) }}"
         :revisions-enabled="{{ $str::bool($revisionsEnabled) }}"
         :preview-targets="{{ json_encode(['format'=>'{permalink}','label'=>'Entry','refresh'=>true]) }}"
-        :live-preview-url="{{ cp_route('runway.preview', [
+        live-preview-url="{{ cp_route('runway.preview', [
             'resource' => $resource->handle(),
-            'model' => $resource->routeKey(),
+            'model' => $values['id'],
         ]) }}"
     ></runway-publish-form>
 
